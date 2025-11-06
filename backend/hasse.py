@@ -1,4 +1,4 @@
-# backend/hasse.py
+
 from collections import deque
 from typing import List, Dict, Tuple, Any
 import numpy as np
@@ -58,7 +58,6 @@ def get_cartan(group: str, n: int) -> List[List[int]]:
             [0, -1,  2, -1],
             [0,  0, -1,  2]
         ]
-        # Reverse for rightward arrow
         C = _reverse_cartan(C)
         return C
 
@@ -69,7 +68,6 @@ def get_cartan(group: str, n: int) -> List[List[int]]:
             [2, -1],
             [-3, 2]
         ]
-        # Reverse for rightward arrow
         C = _reverse_cartan(C)
         return C
 
@@ -134,7 +132,6 @@ def get_adjoint_weight(group: str, n: int) -> List[int]:
     if G == "A":
         if n < 1:
             raise ValueError("A_n requires n>=1")
-        # A_n: [1, 0, 0, ..., 0, 1] (1's at both ends)
         result = [0] * n
         result[0] = 1
         result[n - 1] = 1
@@ -143,7 +140,6 @@ def get_adjoint_weight(group: str, n: int) -> List[int]:
     if G == "B":
         if n < 2:
             raise ValueError("B_n requires n>=2")
-        # B_n: [0, 1, 0, ..., 0] (1 at position 2 / index 1)
         result = [0] * n
         result[1] = 1
         return result
@@ -151,7 +147,6 @@ def get_adjoint_weight(group: str, n: int) -> List[int]:
     if G == "C":
         if n < 2:
             raise ValueError("C_n requires n>=2")
-        # C_n: [2, 0, 0, ..., 0] (2 at position 1 / index 0)
         result = [0] * n
         result[0] = 2
         return result
@@ -159,20 +154,16 @@ def get_adjoint_weight(group: str, n: int) -> List[int]:
     if G == "D":
         if n < 4:
             raise ValueError("D_n requires n>=4")
-        # D_n: [0, 1, 0, ..., 0] (1 at position 2 / index 1)
         result = [0] * n
         result[1] = 1
         return result
     
     if G == "E":
         if n == 6:
-            # E6: [0, 0, 0, 0, 0, 1]
             return [0, 0, 0, 0, 0, 1]
         elif n == 7:
-            # E7: [0, 0, 0, 0, 0, 0, 1]
             return [0, 0, 0, 0, 0, 0, 1]
         elif n == 8:
-            # E8: [0, 0, 0, 0, 0, 0, 0, 1]
             return [0, 0, 0, 0, 0, 0, 0, 1]
         else:
             raise ValueError("E only supports n=6,7,8")
@@ -180,13 +171,11 @@ def get_adjoint_weight(group: str, n: int) -> List[int]:
     if G == "F":
         if n != 4:
             raise ValueError("F only supports n=4")
-        # F4: [0, 0, 0, 1]
         return [0, 0, 0, 1]
     
     if G == "G":
         if n != 2:
             raise ValueError("G only supports n=2")
-        # G2: [0, 1]
         return [0, 1]
     
     raise ValueError(f"Unsupported group {group}")
@@ -236,7 +225,6 @@ def build_tree(group: str, n: int, selected: List[int], l: int) -> Dict:
     if not selected:
         raise ValueError("selected nodes list cannot be empty")
     
-    # Convert to 0-based indexing and validate
     sel0 = []
     for s in selected:
         if not (1 <= s <= n):
@@ -272,7 +260,7 @@ def build_tree(group: str, n: int, selected: List[int], l: int) -> Dict:
             if val > 0:
                 try:
                     new_vec = reflect_vector(vec, cartan, i, group)
-                    new_path = path + [i + 1]  # Store 1-based indices
+                    new_path = path + [i + 1] 
                     tup = tuple(new_vec)
 
                     if tup in seen:
@@ -296,10 +284,8 @@ def build_tree(group: str, n: int, selected: List[int], l: int) -> Dict:
                         "move": i + 1
                     })
                 except ValueError:
-                    # Skip invalid reflections
                     continue
 
-    # Collect nodes at exactly depth l
     depth_l = []
     for node in nodes:
         if node["depth"] == l:
@@ -316,23 +302,14 @@ def build_tree(group: str, n: int, selected: List[int], l: int) -> Dict:
 
 
 def reflect_weight_by_root(weight: List[int], cartan: List[List[int]], index: int, group: str = "A") -> List[int]:
-    """
-    Standard Weyl group reflection for weights.
-    Formula: s_i(λ) = λ - (λ, α_i^∨) * α_i
-    where (λ, α_i^∨) is the i-th component of λ (in fundamental weight basis)
-    and α_i is the i-th column of the Cartan matrix.
-    
-    For F₄ and G₂, the Cartan matrix is pre-reversed in get_cartan(), so no special handling needed.
-    """
+
     coeff = weight[index]
     col = [row[index] for row in cartan]
     return [w - coeff * c for w, c in zip(weight, col)]
 
 
 def compute_affine_action(group: str, n: int, weight: List[int], path: List[int]) -> Dict[str, Any]:
-    """
-    Return detailed affine action object for given path (list of 1-based indices).
-    """
+
     if isinstance(weight, str):
         s = weight.strip()
         if "," in s:
@@ -435,47 +412,30 @@ def compute_affine_for_all_paths(group: str, n: int, selected: List[int], l: int
 
 
 def compute_gradation(group: str, n: int, selected: List[int], l: int, weight: List[int]) -> List[Dict[str, Any]]:
-    """
-    Compute gradation for all nodes in the Hasse tree.
-    
-    Pipeline:
-    1. Convert initial weight to root coordinates using C^{-1}
-    2. Compute gradation = sum of active root coordinates
-    3. For each node, apply Weyl group element and recompute gradation
-    
-    Skips depth 0 (root node) as it has empty path and causes errors.
-    """
     tree = build_tree(group, n, selected, l)
     cartan = get_cartan(group, n)
     cartan_inv = compute_cartan_inverse(cartan)
     
-    # Convert selected indices to 0-based
     sel0 = [s - 1 for s in selected]
     
     gradations = []
     
     for node in tree["nodes"]:
-        # Skip depth 0 (root node with empty path)
         if node["depth"] == 0:
             continue
             
         path = node["path"]
         
         try:
-            # Get the affine action result
             affine_info = compute_affine_action(group, n, weight, path)
             output_weight = affine_info["output"]
             
-            # Convert to root coordinates
             root_coords = convert_to_root_coordinates(output_weight, cartan_inv)
             
-            # Fix -0.0 to 0.0 in root coordinates
             root_coords = [0.0 if x == 0 else x for x in root_coords]
             
-            # Compute gradation: sum of coordinates for active roots
             gradation_value = sum(root_coords[i] for i in sel0)
             
-            # Handle -0.0 display: convert to 0.0
             if gradation_value == 0:
                 gradation_value = 0.0
             
@@ -486,7 +446,7 @@ def compute_gradation(group: str, n: int, selected: List[int], l: int, weight: L
                 "output_weight": output_weight,
                 "root_coordinates": root_coords,
                 "gradation": gradation_value,
-                "active_roots": [i + 1 for i in sel0]  # Convert back to 1-based for display
+                "active_roots": [i + 1 for i in sel0]
             })
         except Exception as e:
             gradations.append({
@@ -495,4 +455,5 @@ def compute_gradation(group: str, n: int, selected: List[int], l: int, weight: L
                 "error": str(e)
             })
     
+
     return gradations
