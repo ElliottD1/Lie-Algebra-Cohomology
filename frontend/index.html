@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hasse Diagram & Cohomology</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <h1>Hasse Diagram & Gradation Calculator</h1>
+
+  <div class="controls">
+    <label>
+      Group:
+      <select id="group">
+        <option value="A">A (Aₙ)</option>
+        <option value="B">B (Bₙ)</option>
+        <option value="C">C (Cₙ)</option>
+        <option value="D">D (Dₙ)</option>
+        <option value="E">E (E₆/E₇/E₈)</option>
+        <option value="F">F (F₄)</option>
+        <option value="G">G (G₂)</option>
+      </select>
+    </label>
+
+    <label>
+      n (rank):
+      <input type="number" id="n" value="4" min="1" />
+    </label>
+
+    <label>
+      l (depth):
+      <input type="number" id="l" value="2" min="0" />
+    </label>
+
+    <label>
+      Selected nodes:
+      <input type="text" id="selected" value="2" />
+    </label>
+
+    <label>
+      <input type="checkbox" id="useAdjoint" />
+      Use Adjoint Representation
+    </label>
+
+    <label>
+      <input type="checkbox" id="positiveOnly" />
+      Positive Gradation Only
+    </label>
+  </div>
+
+  <div class="buttons">
+    <button id="computeHasse">Compute Hasse Diagram</button>
+    <button id="computeCohomology">Compute Gradations</button>
+  </div>
+
+  <svg id="diagram" width="900" height="600"></svg>
+
+  <h2>Results</h2>
+  <pre id="cohomologyResults"></pre>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
