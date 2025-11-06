@@ -19,13 +19,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Locate frontend directory relative to this file (two levels up -> sibling 'frontend')
 frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
 
 if frontend_dir.exists() and frontend_dir.is_dir():
@@ -54,10 +53,6 @@ async def get_index():
 
 @app.post("/compute/{group}")
 async def compute_group(group: str, request: Request):
-    """
-    Build Hasse tree for the requested Dynkin group.
-    Expects JSON: { "n": int, "l": int, "selected": [1,2,...] }
-    """
     try:
         data = await request.json()
     except Exception as e:
@@ -83,11 +78,6 @@ async def compute_group(group: str, request: Request):
 
 @app.post("/cohomology/{group}")
 async def cohomology_all_paths(group: str, request: Request):
-    """
-    Compute w(lambda+rho)-rho for every path found in the Hasse tree up to depth l.
-    Expects JSON: { "n": int, "l": int, "selected": [..], "use_adjoint": bool }
-    Returns: { "tree": ..., "cohomology_results": [...], "gradations": [...] }
-    """
     try:
         data = await request.json()
     except Exception as e:
@@ -102,12 +92,10 @@ async def cohomology_all_paths(group: str, request: Request):
         selected = [int(x) for x in selected]
         
         use_adjoint = bool(data.get("use_adjoint", False))
-        
-        # Determine which weight to use
+
         if use_adjoint:
             weight = get_adjoint_weight(group, n)
         else:
-            # Default to rho if not using adjoint
             weight = [1] * n
             
     except Exception as e:
@@ -116,8 +104,7 @@ async def cohomology_all_paths(group: str, request: Request):
     try:
         tree = build_tree(group, n, selected, l)
         coho = compute_affine_for_all_paths(group, n, selected, l, weight)
-        
-        # Compute gradations for each node
+
         gradations = compute_gradation(group, n, selected, l, weight)
         
     except Exception as e:
@@ -129,4 +116,5 @@ async def cohomology_all_paths(group: str, request: Request):
         "gradations": gradations,
         "weight_used": weight,
         "use_adjoint": use_adjoint
+
     }
